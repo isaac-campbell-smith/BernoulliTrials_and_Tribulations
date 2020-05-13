@@ -7,9 +7,9 @@ Data source: https://www.cs.purdue.edu/commugrate/data/credit_card/
 ---
 ## Sections:
  |  **[Introduction](#introduction)**  |
- **[Data Cleaning & Exploration](#data-cleaning)**  |
- **[Dealing with Imbalanced Classifier](#initial-modeling)**  |
- **[Hypothesis](#hypothesis)**  |
+ **[Data Cleaning & Exploration](#data-cleaning-&-exploration)**  |
+ **[Dealing with Imbalanced Classifier](#dealing-with-imbalanced-classifier)**  |
+ **[Cost Benefit & Scoring Metrics](#cost-benefit-&-scoring-metrics)**  |
  **[Focused Exploration](#focused-exploration)**  |
  **[Analysis](#analysis)**  |
  **[Future](#future)**  |<br><br>
@@ -40,138 +40,31 @@ Cleaned Dataset:
 <sub>[  **[Back to Sections](#sections)** ]</sub>
 
 ## Dealing with Imbalanced Classifier
-### Graphs/Visualizations:
- |  **[Averge MPG by Manufacturer](#Average-MPG-by-Manufacturer)**  |
- **[Horsepower to MPG](#MPG-to-Horsepower-Scatter-Plot)**  |
- **[Torque to MPG](#MPG-to-Torque-Scatter-Plot)**  |
- **[Weight to MPG](#MPG-to-Weight-Scatter-Plot)**  |
- **[Passenger Door to MPG](#MPG-to-Passenger-Doors-Density-Plot)**  |<br>
-<details>
-  <summary>
-    Show Graphs
-  </summary>
-<br>
 
-> The rabbit hole of exploration
-#### Average MPG by Manufacturer  
-<img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/avgmpgbrand.png" width="80%"></img>
-<br>| **[Back](#graphsvisualizations)** |
-#### MPG to Horsepower Scatter Plot
-<img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/mpgbyhp.png" width="80%"></img>
-<br>| **[Back](#graphsvisualizations)** |
-#### MPG to Torque Scatter Plot
-<img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/mpgbytq.png" width="80%"></img>
-<br>| **[Back](#graphsvisualizations)** |
-#### MPG to Weight Scatter Plot
-<img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/mpgbyweight.png" width="80%"></img>
-<br>| **[Back](#graphsvisualizations)** |
-#### MPG to Passenger Doors Density Plot
-> Getting a little desperate to find something meaningful...
-<img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/mpgbydoorsDensity.png" height="auto" width="80%"></img>
-<br>| **[Back](#graphsvisualizations)** |
-<br>
+
+> SMOTE sampling
 
 
 </details> 
 
-Ever since the mishap of finding possibly corrupted data, as well as choosing a topic/hypothesis that was unsupportable or unquantifiable at this point (with my skillset), I started to delve deeper into the data. I knew I needed to visualize and compare different specifications against each other in order to find something interesting. 
+Text goes here
 
 <br> 
 
-> With a 2020 mindset and considering the trajectory of car specifications over the years, I thought to myself, "*What are some important aspects that come to mind when people pick a car*? 
+> 
 
 <br>
 
-That's when it hit me! I started to focus my visualizations and comparisons over a car's MPG (Miles per Gallon). Over 10-20 plots later, and with the help of [Pandas-Profiling](https://github.com/pandas-profiling/pandas-profiling), I was finally able to reformulate a hypothesis.  
 
 ---
 <sub>[  **[Back to Sections](#sections)** ]</sub>
 
-## Focused Exploration
+## Cost Benefit & Scoring Metrics
 
-It was on this plot that I was pointed out that 5 Cylinder engines have a *Bimodal* distribution when it comes to their MPG
+Business problems require business solutions and while it would be great to just shoot for a perfect 100% accuracy, that's not super plausible. Instead we'll 
 
-> #### MPG-to-n_Cylinders-Density-Plot <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/img/mpgbycyldense.png" width="80%"></img><br>
+>*NOTE: The original competition guidelines specified results at a 20% lift. This isn't a great metric so I went with my own.
 
-As you can see, with the graphs, there has been a progression on centering the focus of what exact pieces of data I wanted to further explore. 
-
-<details>
-  <summary>
-    <b> Histogram of MPG of 5-CYL Engines with Dist </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/5cylmpgdist.png">
-  </img>
-</details>
-
-<details>
-  <summary>
-    <b> MPG Dist of 5-CYL Engines by Manufacturer </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/5cylmpgbymodel.png">
-  </img>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/5cylmpgbymodelgran.png">
-  </img>
-</details>
-
-<details>
-  <summary>
-    <b> 5-CYL MPG Averages by Model  </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/mpgavg5cylmodel.png">
-  </img>
-</details>
-
----
-
-<details>
-  <summary>
-    <b> 5-CYL Horsepower/Torque Averages by Model  </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/hptqavgmodel.png">
-  </img>
-</details>
-
-<details>
-  <summary>
-    <b> 5-CYL Horsepower Densities by Manufacturer  </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/5cylhpmanufacturer.png">
-  </img>
-</details>
-
-<details>
-  <summary>
-    <b> Power Densities by Cylinder  </b>  
-  </summary>
-  <img src="https://raw.githubusercontent.com/boogiedev/automotive-eda/master/focused_img/powdistbycyl.png">
-  </img>
-</details>
-
----
-<sub>[  **[Back to Sections](#sections)** ]</sub>
-
-## Hypothesis
-
-After exploring the data, and thanks to the help of Tony and Andrew (my instructors) we saw that the MPG distribution of 5-Cylinder engines were Bimodal! This was interesting! Even having a bit of domain knowledge about cars, I couldn't exactly explain, or even prove why this was the case. 
-<br>
-
-> My initial thoughts: 
-
-*5-Cylinder engine configurations are somewhat of a novelty engine, where the majority of car models who host this engine are coming from the same manufacturers who are grandfathering in this design choice as a statement of legacy, rather than practicality.*
-
-<br>
-
-**TLDR: 5-Cylinder Engine configurations offer _no advantages_ over more "Traditional" Engines (I-4, V-6)**
-
-**Null :<br> 
-![#f03c15](https://placehold.it/15/f03c15/000000?text=+) 5-Cyl Engine configs offer _no advantages_ over I-4, V-6 Engines configs in the categories below**<br>
-**Alternative :<br>
-![#c5f015](https://placehold.it/15/c5f015/000000?text=+) 5-Cyl Engine configs _do_ offer _advantages_ over I-4, V-6 Engines configs in the categories below**<br>
-
-| Miles Per Gallon (MPG - Combined)  | Horsepower | Torque |
-| ------------- | ------------- | ------------- |
-
-<br>
 
 ---
 <sub>[  **[Back to Sections](#sections)** ]</sub>
