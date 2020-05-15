@@ -18,7 +18,7 @@ Data source: https://www.cs.purdue.edu/commugrate/data/credit_card/
 ---
 ## Introduction
 Fraud: boy is it a problem! Today we'll be looking at a 2009 dataset of anonymized credit card transaction data from a now defunct data-mining competition but currently available via the header link at cs.Purdue.edu
-> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. 
+> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. Both are much more difficult to predict than the Kaggle fraud detection set everybody seems content to work with.
 ---
 ## Data Cleaning & Exploration
 Original Dataset:
