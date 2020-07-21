@@ -1,6 +1,6 @@
 # Bernoulli Trials & Tribulations
 
-#### Predicting fraud and anomaly detection on imbalanced classification data with an unreasonable level of hatred for Kaggle competitors
+#### Predicting fraud and anomaly detection on imbalanced classification data with an unreasonable level of hatred for Kaggle data
 
 Data source: https://www.cs.purdue.edu/commugrate/data/credit_card/
 
@@ -11,18 +11,20 @@ Data source: https://www.cs.purdue.edu/commugrate/data/credit_card/
  **[Cost Benefit & Scoring Metrics](#cost-benefit-&-scoring-metrics)**  |
  **[The Models](#the-models)**  |
  **[Analysis](#analysis)**  |
- |  **[Takeaways](#takeaways)**  |
+ **[Takeaways](#takeaways)**  |
  
 ---
 ## Introduction
 Fraud: boy is it a problem! Today we'll be looking at a 2009 dataset of anonymized credit card transaction data from a now defunct data-mining competition but currently available via the header link at cs.Purdue.edu
-> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. Both are more difficult to predict than the popular Kaggle fraud detection dataset everybody seems content to work with and I have hate in my heart for people that flex on it.
+> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. Both are more difficult to predict than the popular Kaggle fraud detection dataset that makes an appearance in many ML Youtube videos and I have hate in my heart for people that flex their 99.999% accuracy on it.
 
 While the original hosting page of the data is no longer available, I managed to find a fraud detection model proposal that helped put a few things in context and provided inspiration along the way:
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180893/
 
 Here is a data snippet that illustrates the complexity of fraud detection. Can you see why?
 ![Similarties](https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/FraudvsNot.png)
+
+Rows 3 & 4 are identical column-wise, yet row 3 is classified as fraud and row 4 is not. Obviously, some fraudersters are highly skilled at circumventing detection by completely copying valid transactions. Perhaps this classification was owing to user error. 
 
 ---
 ## Data Cleaning & Exploration
@@ -68,18 +70,46 @@ And finally here's a breakdown of all the different bonus features (I'm excludin
 
 
 ## The Models
+The original contest 'business problem' states that the goal here 'is to maximize accuracy of binary classification on a test data set, given a fully labeled training data set. The performance metric is the lift at 20% review rate'. I am instead choosing to look at Reciever Operating Characteristic curves(or ROC curves, the true positive against the false positive rate) for two reasons. One is that it's simply a more commonly used Classification metric. The other is that I wanted to explore a theoretical business scenario and the cost-benefit of adjusting classification probability thresholds. In some contexts, the optimal model will not maximize accuracy. All ROC curves below are based on a 0.5 probability cut-off, meaning any transactions the model considers to have a 50% (or greater) likelihood of fraud will be classified as fraud. 
 
 ### Logistic Regression
 The classic classification algorithm! It takes some This model initially performed very poorly initially (essentially guessing badly) - it took some feature engineering to boost performance. I wasn't expecting this model to perform as well as it did. 
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/Logistic.png" width="550">
 
-### Gradient Boosted Random Forests
-I explored several variants of this type of model. XGBoost has been very highly touted and it did do well, however, to get the ROC 5 points higher than a simple logistic regression came at a cost - it took almost 2 hours for this model to train (vs seconds for the logistic regression). 
-<br><br>
+### Gradient Boosted Forests
+#### XGBoost
+XGBoost has been a very highly touted model in the last couple years and it did perform well, however, to get the ROC 5 points higher than a simple logistic regression came at a cost - it took almost 2 hours for this model to train (vs seconds for the logistic regression). Though xgboost does include a `DMatrix` datatype meant to dramatically speed up training, the documentation and stack overflow discussions on proper use is unclear, and I could not work past this error: `'DMatrix' object has no attribute 'shape'`.
+
+After tuning some of the hyperparameters (see hyperparameter_tuning notebook), the output achieved here was trained with this model:
+```
+xgb = XGBClassifier(booster='dart', 
+                    subsample=.8,
+                    max_depth=8,
+                    learning_rate=0.05, 
+                    max_delta_step=0, 
+                    min_child_weight=1, 
+                    n_estimators=1500)
+```
+
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/XGBoost.png" width="550">
 <br>
-I also read a couple papers about Isolation Forests, which focuses on outlier detection. While it seems to be a potent algorithm, I did not find much success with it. It was much less consistent and accurate than any of the other models. The model tuning is a bit murky for me and the scale it assigns to the output is not a simple probability. But I include it here for posterity.
+
+#### LightGBM 
+LightGBM is similar to XGBoost with 2 key differences (in this work anyway). Firstly, it supports Scipy's sparse matrix without issue -- the above XGBoostClassifier ran for about 2 hours to fit all 5 K-folds while LightGBM took less than a minute.  Secondly, LightGBM incudes a `categorical_feature` parameter which allows you to specify training columns with `int` type as categories and the model handles one-hot-encoding under the hood. The results shown here labelled zip and customer id as categorical features, but otherwise identical to the XGBoostClassifier.
+```
+lgb = LGBMClassifier(boosting_type='dart', 
+                     subsample=.8, subsample_freq=1,
+                     categorical_features='2,3',
+                     learning_rate=0.05, 
+                     min_child_weight=1, 
+                     n_estimators=1500)
+```
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/LightGBM.png" width="550">
+<br>
+
+#### Isolation Forest
+I also read a couple papers about Isolation Forests, which focuses on outlier detection. While it seems to be a potent algorithm, I did not find much success with it. It was much less consistent and accurate than any of the other models. The model tuning is a bit murky for me and the scale it assigns to the output is not a simple probability (rather -1 to 1). But I include it here for posterity.
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/IsoForest.png" width="550">
 <br>
