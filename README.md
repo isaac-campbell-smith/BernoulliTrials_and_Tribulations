@@ -8,15 +8,13 @@ Data source: https://www.cs.purdue.edu/commugrate/data/credit_card/
 ## Sections:
  |  **[Introduction](#introduction)**  |
  **[Data Cleaning & Exploration](#data-cleaning-&-exploration)**  |
- **[Cost Benefit & Scoring Metrics](#cost-benefit-&-scoring-metrics)**  |
  **[The Models](#the-models)**  |
- **[Analysis](#analysis)**  |
- **[Takeaways](#takeaways)**  |
+ **[Cost Benefit & Scoring Metrics](#cost-benefit-&-scoring-metrics)**  |
  
 ---
 ## Introduction
-Fraud: boy is it a problem! Today we'll be looking at a 2009 dataset of anonymized credit card transaction data from a now defunct data-mining competition but currently available via the header link at cs.Purdue.edu
-> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. Both are more difficult to predict than the popular Kaggle fraud detection dataset that makes an appearance in many ML Youtube videos and I have hate in my heart for people that flex their 99.999% accuracy on it.
+Fraud: boy is it a problem! In the U.S. alone, fraud accounts for losses of about $170 Billion annually and the methods used by fraudsters are always changing. Thankfully, there are some pretty powerful machine learning algorithms that can be used to detect and prevent that from happening. Today we'll be looking at a 2009 dataset of anonymized credit card transaction data from a now defunct data-mining competition but currently available via the header link at cs.Purdue.edu
+> The competition offers 2 version of the data - easy & hard mode. The hard mode purportedly offers several more powerful indicators but requires deeper cleaning. I went with hard mode. Both are more difficult to predict than the popular Kaggle fraud detection dataset that makes an appearance in many ML Youtube videos and I have hate in my heart for people that flex their 99.999% accuracy on it (which is not a good scoring metric to use by the way).
 
 While the original hosting page of the data is no longer available, I managed to find a fraud detection model proposal that helped put a few things in context and provided inspiration along the way:
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180893/
@@ -24,7 +22,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180893/
 Here is a data snippet that illustrates the complexity of fraud detection. Can you see why?
 ![Similarties](https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/FraudvsNot.png)
 
-Rows 3 & 4 are identical column-wise, yet row 3 is classified as fraud and row 4 is not. Obviously, some fraudersters are highly skilled at circumventing detection by completely copying valid transactions. Perhaps this classification was owing to user error. 
+Rows 3 & 4 are identical column-wise, yet row 3 is classified as fraud and row 4 is not. Obviously, some fraudersters are highly skilled at circumventing detection by completely copying valid transactions. Perhaps this classification was owing to user error but I built my models knowing I wouldn't be able to perfectly classify all fraud cases. 
 
 ---
 ## Data Cleaning & Exploration
@@ -49,7 +47,7 @@ This is interesting! Fraud seems to happen on a greater proportion of off hours 
 
 As with $0 transactions, my intial impulse was to remove the outlier domain coming from ClintMiller.com (and theoretically tell IT to ban them) but ultimately found this led to weaker predictions. I also found that out of 67 accounts making multiple transactions, only 5 were attributed solely to fraud (for a total of 11 fraudulent transactions). This was another removal I thought might help but didn't. 
 
-And finally here's a breakdown of all the different bonus features (I'm excluding Field3 because it's wild). It's reasonable to assume that at the very least all categories excluding field3, field4 and flag5 can be treated categorically rather than numerically. I one-hot-encoded field1 for training and did experiment with treating field4 and flag5 similarly though this only added hours to computation for minute changes to the output.
+And finally here's a breakdown of all the different bonus features (I'm excluding Field3 because it's wild). It's reasonable to assume that at the very least all categories excluding field3, field4 and flag5 can be treated categorically rather than numerically. I one-hot-encoded field1 for training and did experiment with treating field4 and flag5 similarly though this only added hours to computation for 'barely-there' improvements to the output.
 | Category       | Number of Unique Values     |
 | :------------- | :----------: |
 | field1     | 5 |
@@ -70,10 +68,10 @@ And finally here's a breakdown of all the different bonus features (I'm excludin
 
 
 ## The Models
-The original contest 'business problem' states that the goal here 'is to maximize accuracy of binary classification on a test data set, given a fully labeled training data set. The performance metric is the lift at 20% review rate'. I am instead choosing to look at Reciever Operating Characteristic curves(or ROC curves, the true positive against the false positive rate) for two reasons. One is that it's simply a more commonly used Classification metric. The other is that I wanted to explore a theoretical business scenario and the cost-benefit of adjusting classification probability thresholds. In some contexts, the optimal model will not maximize accuracy. All ROC curves below are based on a 0.5 probability cut-off, meaning any transactions the model considers to have a 50% (or greater) likelihood of fraud will be classified as fraud. 
+The original contest 'business problem' states that the goal here 'is to maximize accuracy of binary classification on a test data set, given a fully labeled training data set. The performance metric is the lift at 20% review rate'. I am instead choosing to look at Reciever Operating Characteristic curves(or ROC curves, the true positive against the false positive rate) for two reasons. One is that it's simply a more commonly used Classification metric. The other is that I wanted to explore a theoretical business scenario and the cost-benefit of adjusting classification probability thresholds. In some contexts, the optimal model will not maximize accuracy. 
 
 ### Logistic Regression
-The classic classification algorithm! It takes some This model initially performed very poorly initially (essentially guessing badly) - it took some feature engineering to boost performance. I wasn't expecting this model to perform as well as it did. 
+The classic classification algorithm! It takes some This model initially performed very poorly initially (essentially guessing badly) - it took some feature engineering to boost performance, but I wasn't expecting this model to perform as well as it did. 
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/Logistic.png" width="550">
 
@@ -93,7 +91,7 @@ xgb = XGBClassifier(booster='dart',
 ```
 
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/XGBoost.png" width="550">
-<br>
+
 
 #### LightGBM 
 LightGBM is similar to XGBoost with 2 key differences (in this work anyway). Firstly, it supports Scipy's sparse matrix without issue -- the above XGBoostClassifier ran for about 2 hours to fit all 5 K-folds while LightGBM took less than a minute.  Secondly, LightGBM incudes a `categorical_feature` parameter which allows you to specify training columns with `int` type as categories and the model handles one-hot-encoding under the hood. The results shown here labelled zip and customer id as categorical features, but otherwise identical to the XGBoostClassifier.
@@ -106,52 +104,53 @@ lgb = LGBMClassifier(boosting_type='dart',
                      n_estimators=1500)
 ```
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/LightGBM.png" width="550">
-<br>
+
 
 #### Isolation Forest
 I also read a couple papers about Isolation Forests, which focuses on outlier detection. While it seems to be a potent algorithm, I did not find much success with it. It was much less consistent and accurate than any of the other models. The model tuning is a bit murky for me and the scale it assigns to the output is not a simple probability (rather -1 to 1). But I include it here for posterity.
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/IsoForest.png" width="550">
-<br>
+
 CatBoost was the model that seems to win the day here. What's great about this model is it's high ROC score, ease of use, and computation time. While it took a bit longer for this model to train than the Logistic Regression, it was remarkably faster than the XGB classifier (without any hyperparameter tuning!)
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/Catboost.png" width="550">
-<br>
+
 I generated a holdout set to use as a final test for all the models just to verify there wasn't anything strange going on in the testing phase and these results did validate the testing observations.
 <br><br>
 <img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/Compared.png" width="550">
 <br>
 
-### Apriori
-I spent way more time than I am willing to admit on an incorrectly labeled dataset and my predictions were all horrible. Nothing was working. So I turned to the model that the aforementioned paper used in their experiment. The tl;dr of their method was to only train on accounts occuring multiple times so to establish a dataset of fraud transactions and legal transactions, look at a bunch of combinations of features with a specific level of support for that group, and classify testing data based on the max support between both groups. They reported a nearly 100% accuracy rate but at the cost of not even attempting to flag novel transactions.
-
-## Analysis
-![ROC Curves]()
-Parameters!
 ---
 <sub>[  **[Back to Sections](#sections)** ]</sub>
 
 ## Cost Benefit & Scoring Metrics
 
-Business problems require business solutions and while it would be great to just shoot for a perfect 100% accuracy, that's not super plausible. In the case of this dataset, it's likely impossible. Instead I'd like to explore a business scenario and the various cost/benefit outcomes of adopting vs. not adopting a model.
+Business problems require business solutions and while it would be great to just shoot for a perfect 100% accuracy, that doesn't seem plausible here. When we're predicting things like fraud we have to take into consideration the cost of fraud, the cost of reviewing fraud, and the cost of hassling users with misclassifying legal transactions as fraud. 
 
->*NOTE: The original competition guidelines specified results at a 20% lift. I'd imagine this is because 11 years ago, implementing a model was a lot more computationally expensive so they were looking for a strong confidence interval around a subgroup. I went with traditional ROC metrics to evaluate my models' performance.
+### Different Business Scenarios
+#### Base Case
+Let's move beyond ROC curves and examine how our default CatBoost model does with calculating the probability of fraud on the test data.
+You can see that we only correctly identify just over half of our fraud labels. Note that we do pretty well in avoiding false positives. The average transaction in this dataset is about $27 so we can expect the average cost of fraud to be about the same (it's actually lower here but let's assume it's the same). This dataset spans 98 days which gives me the impression they aren't making big enough money to efficiently review fraud. Let's say there are a few junior employees that take their time to review each case, specifically $15 in manhours. Let's assume there is no risk for user churn in misclassifying fraud, so it costs the same as reviewing fraud. Our loss minimizing probability threshold with this model under this scenario comes pretty close to the default 0.5 classification threshold (that is, all calculated fraud probabilities above 0.5 by the model in the testing data will be classifified as fraud). 
+<br><br>
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/confusion_default.png" width="550">
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/default_profitcurve.png" width="516">
 
-#### The Scenario!
-Our dataset consists of 99999 transactions over 98 days. This means we typically see about 1020 transactions per day, 26 of which are fraudulent. The typical transaction is about $27.50 (interestingly, fraudsters typically pull out only $23.00). Let's assume an employee can review and determine whether 1 transaction was fraudulent in 45 minutes, or 10 per day. Of course there are companies with a more robust tech and employee infrastructures to do this more quickly -- we'll circle back to that.
+#### Low Cost Reviews
+Now let's say we have the resources to very cheaply quickly review fraud and it only costs $2 in manhours. Again we assume that no risk for churn because of fraud reviews. Under this scenario, we can accept far more false positives while reducing the number of false negatives. The statistical terminology for this model is high recall, low precision.
+<br><br>
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/confusion_low.png" width="551">
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/cheapreview_profitcurve.png" width="516">
 
-Let's now imagine a world where we correctly flag all fraudulent cases and only fraudulent cases for review. This would require the labor of 3 employees, who we pay $18 an hour. This set of assumptions is problematic because we typically see 7 cases of fraud between 5pm and 8am vs 19 cases during working hours. Most people who have done online shopping before would not expect an order to process until the following business day, and since we typically see 2 cases of fraud per hour during work hours, it's reasonable to conclude that a 4 person fraud investigation team can keep up with the daily backlog with time leftover. Unfortunately though, nobody wants to work on weekends, and if they did, we'd have to pay them time and a half, making it more cost effective to just let fraud happen on weekends. This means we'll lose about $1,196.00 to fraud per weekend and $1,950 during a typical work week (or 97.5 employee hours). 
-
-Under this story we've told for ourselves, incorrectly flagging fraud as not fraud costs us $23.00, while incorrectly flagging a legal transaction as fraud costs us $18.00 -- 13.5 for employee time + the opportunity loss of reviewing actual fraud. If we correctly flag fraud we only have our $13.50 employee time while correctly flagging legal transactions incurs no loss. 
-
-There's a great irony to me in top-level fraud detection work. At high end firms where the cost of reviewing false positives is probably going to be much lower, you can afford to skew your predictions towards a perfect recall with a lot of false positives. 
+#### High Churn Probability
+Now let's say it costs about $5 to review fraud but we expect to lose $75 from user churn for misclassification. This is a bit of a ridiculous scenario, but I just want to illustrate how this changes the loss curve. Under this scenario we have to be more certain in our predictions and have to accept more fraud to occur to reduce false negatives (or low recall, high precision).
+<br><br>
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/confusion_high.png" width="551">
+<img src="https://raw.githubusercontent.com/isaac-campbell-smith/BernoulliTrials_and_Tribulations/master/visuals/churny_profitcurve.png" width="516">
 
 ![Cost]
 ---
 
 <sub>[  **[Back to Sections](#sections)** ]</sub>
 
-
-
-
-## Takeaways
+## Conclusion
+With Machine Learning and Data Science being such trendy work these days, I hope this case study demystifies how it actually relates to doing business. As the previous section illustrates, ML algorithms can save businesses quite a bit of money, but it's almost equally as important to have a solid system for review in place. While CatBoost is currently my favorite algorithm after this exercise, the scoring metrics are close enough that other models are worthy of consideration.
